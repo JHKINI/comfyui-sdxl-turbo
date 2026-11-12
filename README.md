@@ -278,6 +278,18 @@ Flask 웹을 VM의 Docker 컨테이너로 띄우고, 이미지 생성은 GPU 서
 | 단점 | 한 줄만 고쳐도 다시 빌드해야 한다 | VM 폴더에 코드가 있어야만 실행된다 |
 | 어울리는 상황 | 완성된 버전을 배포할 때 | 코드를 자주 고치는 개발 단계 |
 
+**파일을 VM으로 옮기기**
+
+파일 옮기기도 두 가지로 해 보았다.
+
+- `deploy_vm.sh` 붙여넣기: 파일들이 스크립트 안에 들어 있어서, VM에 붙여넣고 실행하면 풀기 → 빌드 → 실행까지 한 번에 된다. 코드를 고치면 스크립트도 다시 만들어야 한다.
+- `scp`: 내 PC의 PowerShell에서 폴더나 파일 하나를 바로 보낸다. `-v` 방식(5001번)과 같이 쓰면 파일을 보낸 뒤 `docker restart` 한 줄로 반영된다.
+
+```powershell
+scp -r D:\경로\comfyui <사용자>@<VM IP>:~/            # 폴더 전체
+scp D:\경로\comfyui\app.py <사용자>@<VM IP>:~/comfyui/   # 파일 하나만
+```
+
 **사전 확인 (VM에서)**
 
 ```bash
@@ -332,7 +344,7 @@ sudo docker run -d --name comfy-web-5001 --restart unless-stopped \
 | GPU 서버에 연결할 수 없음 | ComfyUI를 `--listen 0.0.0.0` 으로 실행했는지 확인, `curl` 로 테스트 |
 | 이미지가 안 나오고 시간 초과 | ComfyUI 로그 확인, `test.json` 노드 번호(6, 7, 13) 확인 |
 
-파일 옮기는 방법, 자주 쓰는 명령 등 자세한 내용은 [docs/deploy_vm_guide.md](docs/deploy_vm_guide.md) 참고.
+단계별 명령, 설정을 바꿀 때 할 일, 겪은 문제 전체 목록 등 자세한 내용은 [docs/deploy_vm_guide.md](docs/deploy_vm_guide.md) 참고.
 
 ## 10. 다른 PC의 ComfyUI에 요청하기 (Flux2)
 
