@@ -28,7 +28,8 @@ ComfyUI API를 Flask 웹 페이지(Prompt Studio)에 연결하고, 그 웹을 VM
 ```
 .
 ├── README.md
-├── app.py                # Flask 서버 (ComfyUI API 호출)
+├── app.py                # Flask 서버 (ComfyUI API 호출, SDXL Turbo용)
+├── app_flux2.py          # Flux2 워크플로용 버전 (10번 실습)
 ├── requirements.txt      # flask, requests
 ├── Dockerfile            # 웹 서버 이미지 빌드 설정
 ├── templates/
@@ -382,8 +383,22 @@ sudo docker run -d --name comfy-web-5001 --restart unless-stopped \
 - 포지티브 프롬프트는 CLIP 노드에 직접 넣지 않고, 따로 있는 Prompt 노드(`76`)에 넣는다. 키 이름도 `text` 가 아니라 `value` 다.
 - 스텝 20, 1024 x 1024 라서 SDXL Turbo(1스텝, 512)보다 한 장 생성에 훨씬 오래 걸린다. 대기 시간을 늘린 이유 중 하나다.
 
-> 이 저장소의 `app.py` 는 SDXL Turbo 버전(노드 `6`, `7`, `13`, 대기 180초)이다.
-> Flux2로 돌릴 때는 워크플로를 `flux2.json` 으로 바꾸고, 노드 번호와 대기 시간을 위 표대로 수정해서 사용했다.
+**Flux2용 코드 ([`app_flux2.py`](app_flux2.py))**
+
+`app.py` 와 달라진 점은 세 가지다.
+
+1. 기본 워크플로가 `static/flux2.json`
+2. 노드 번호를 코드 위쪽 상수 3줄로 뺐다. 템플릿을 바꾸면 이 부분만 고치면 된다.
+
+   ```python
+   POS_NODE  = ("76",    "value")       # Prompt
+   NEG_NODE  = ("75:67", "text")        # Negative Prompt
+   SEED_NODE = ("75:73", "noise_seed")  # RandomNoise
+   ```
+
+3. 워크플로에 해당 노드가 없으면 어떤 노드가 없는지 오류 메시지로 알려 주고, 대기 시간은 600초로 늘렸다.
+
+> `Dockerfile` 은 `app.py` 를 실행한다. Flux2로 돌릴 때는 `app_flux2.py` 내용을 `app.py` 로 바꿔서 사용했다.
 
 ---
 
