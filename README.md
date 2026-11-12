@@ -150,9 +150,13 @@ KSampler (선택: euler_ancestral) ─ SAMPLER ───────────
 
 **5-1. 기본 프롬프트**
 
-| The deep blue sea shimmered under the golden sunlight, endless and serene. | a beautiful landscape with galaxy in a bottle | 8k, ultra realistic, under the water the world of mermaid |
-|:---:|:---:|:---:|
-| <img src="images/01_sea.png" width="256"> | <img src="images/08_galaxy_bottle.png" width="256"> | <img src="images/09_mermaid.png" width="256"> |
+| The deep blue sea shimmered under the golden sunlight, endless and serene. | a beautiful landscape with galaxy in a bottle |
+|:---:|:---:|
+| <img src="images/01_sea.png" width="256"> | <img src="images/08_galaxy_bottle.png" width="256"> |
+
+| 8k, ultra realistic, under the water the world of mermaid | A person in a spacesuit is repairing a space station in space, with Earth visible in the distance |
+|:---:|:---:|
+| <img src="images/09_mermaid.png" width="256"> | <img src="images/10_astronaut.png" width="256"> |
 
 **5-2. 같은 프롬프트, 시드만 다를 때**
 
