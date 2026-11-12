@@ -1,0 +1,13 @@
+# 모델 파일 (용량 큼 - 깃허브 업로드 X)
+*.safetensors
+*.ckpt
+*.pt
+
+# ComfyUI 본체는 직접 clone 해서 사용
+ComfyUI/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

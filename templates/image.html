@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0f14; --panel:#171922; --panel-2:#1e2130; --line:#2a2e3f;
+    --text:#e8eaf2; --muted:#8a90a6; --accent:#8b7cff; --accent-2:#4fd1c5; --danger:#ff6b7a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; color:var(--text);
+    font-family:"Noto Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:
+      radial-gradient(900px 500px at 10% -10%, rgba(139,124,255,.18), transparent 60%),
+      radial-gradient(800px 500px at 110% 10%, rgba(79,209,197,.12), transparent 60%),
+      var(--bg);
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:40px 20px 60px}
+  header{display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px}
+  h1{margin:0; font-size:28px; letter-spacing:-.02em}
+  h1 span{background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .sub{color:var(--muted); font-size:14px; margin-top:6px}
+  .server{font-size:12px; color:var(--muted); background:var(--panel); border:1px solid var(--line); padding:6px 12px; border-radius:999px}
+  .server::before{content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent-2); margin-right:7px; vertical-align:middle}
+
+  .grid{display:grid; grid-template-columns:400px 1fr; gap:22px}
+  @media (max-width:880px){ .grid{grid-template-columns:1fr} }
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px}
+  label{display:block; font-size:13px; font-weight:500; color:var(--muted); margin:0 0 8px}
+  label b{color:var(--text)}
+  textarea{
+    width:100%; resize:vertical; background:var(--panel-2); color:var(--text);
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    font:inherit; font-size:14px; line-height:1.55; outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(139,124,255,.2)}
+  .field{margin-bottom:18px}
+  button{
+    width:100%; border:0; border-radius:10px; padding:14px; cursor:pointer;
+    font:inherit; font-weight:700; font-size:15px; color:#fff;
+    background:linear-gradient(90deg,var(--accent),#6f8bff);
+    box-shadow:0 8px 24px rgba(139,124,255,.3); transition:transform .1s, opacity .15s;
+  }
+  button:hover{transform:translateY(-1px)}
+  button:disabled{opacity:.6; cursor:wait; transform:none}
+
+  .stage{
+    min-height:520px; display:flex; align-items:center; justify-content:center; flex-direction:column;
+    background:var(--panel-2); border:1px dashed var(--line); border-radius:12px; overflow:hidden; position:relative;
+  }
+  .stage img{max-width:100%; max-height:76vh; display:block; border-radius:10px}
+  .placeholder{color:var(--muted); text-align:center; font-size:14px; padding:20px}
+  .placeholder .icon{font-size:40px; opacity:.5; margin-bottom:10px}
+  .meta{display:flex; justify-content:space-between; align-items:center; margin-top:14px; font-size:13px; color:var(--muted); gap:10px; flex-wrap:wrap}
+  .meta a{color:var(--accent-2); text-decoration:none}
+  .error{background:rgba(255,107,122,.1); border:1px solid rgba(255,107,122,.35); color:var(--danger); padding:12px 14px; border-radius:10px; font-size:14px; margin-bottom:14px}
+
+  .loading{display:none; position:absolute; inset:0; background:rgba(14,15,20,.75); align-items:center; justify-content:center; flex-direction:column; gap:14px; color:var(--muted); font-size:14px}
+  .loading.on{display:flex}
+  .spinner{width:42px; height:42px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--accent); animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span>Prompt Studio</span></h1>
+      <div class="sub">텍스트 프롬프트로 이미지를 생성합니다 · ComfyUI</div>
+    </div>
+    <div class="server">GPU {{ comfy_url }}</div>
+  </header>
+
+  <div class="grid">
+    <form class="card" method="post" id="gen-form">
+      <div class="field">
+        <label for="pos"><b>Positive</b> · 그리고 싶은 것</label>
+        <textarea id="pos" name="pos" rows="6">{{ pos }}</textarea>
+      </div>
+      <div class="field">
+        <label for="neg"><b>Negative</b> · 빼고 싶은 것</label>
+        <textarea id="neg" name="neg" rows="3">{{ neg }}</textarea>
+      </div>
+      <button type="submit" id="gen-btn">✨ 이미지 생성</button>
+    </form>
+
+    <section class="card">
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      <div class="stage">
+        {% if img_url %}
+          <img src="{{ img_url }}" alt="생성된 이미지">
+        {% else %}
+          <div class="placeholder"><div class="icon">🖼️</div>프롬프트를 입력하고 <b>이미지 생성</b>을 눌러보세요</div>
+        {% endif %}
+        <div class="loading" id="loading"><div class="spinner"></div>GPU 서버에서 생성 중…</div>
+      </div>
+      {% if img_url %}
+      <div class="meta">
+        <span>{% if elapsed %}생성 시간 {{ elapsed }}초{% endif %}</span>
+        <a href="{{ img_url }}" target="_blank">원본 크게 보기 ↗</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+<script>
+  document.getElementById('gen-form').addEventListener('submit', function(){
+    var b = document.getElementById('gen-btn');
+    b.disabled = true; b.textContent = '생성 중…';
+    document.getElementById('loading').classList.add('on');
+  });
+  // Ctrl/Cmd + Enter 로 바로 생성
+  document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') document.getElementById('gen-form').requestSubmit();
+  });
+</script>
+</body>
+</html>
