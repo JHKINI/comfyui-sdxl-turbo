@@ -3,6 +3,7 @@
 한국폴리텍대학 「딥러닝프로그래밍기초」 Chapter 3 (이미지생성AI - ComfyUI) 실습 정리.
 Docker 컨테이너에 ComfyUI를 설치하고, **SDXL Turbo** 모델로 Text-to-Image 생성을 해본 뒤
 ComfyUI API를 Flask 웹 페이지(Prompt Studio)에 연결하고, 그 웹을 VMware VM의 Docker 컨테이너로 배포하는 것까지 진행했다.
+마지막으로 요청 주소만 바꿔서 다른 PC의 ComfyUI(Flux2 모델)에 요청하는 실습도 했다.
 
 ![Prompt Studio](images/web_ui.png)
 
@@ -311,6 +312,55 @@ sudo docker run -d --name comfy-web-5001 --restart unless-stopped \
 | 이미지가 안 나오고 시간 초과 | ComfyUI 로그 확인, `test.json` 노드 번호(6, 7, 13) 확인 |
 
 파일 옮기는 방법, 자주 쓰는 명령 등 자세한 내용은 [docs/deploy_vm_guide.md](docs/deploy_vm_guide.md) 참고.
+
+## 10. 다른 PC의 ComfyUI에 요청하기 (Flux2)
+
+같은 웹을 그대로 두고, 요청 주소만 바꿔서 다른 PC(교수님 PC)의 ComfyUI + Flux2 모델로 이미지를 생성했다.
+
+```
+내 브라우저 ──► 내 VMware VM (:5000 / :5001, Docker 웹)
+                     │ COMFY_URL
+                     ▼
+              교수님 PC :8188 (ComfyUI + Flux2 모델)
+```
+
+- 내 쪽에는 Flux2 모델이 없다. 그림은 교수님 PC가 그린다.
+- 내 VM은 웹 화면을 보여 주고 요청을 전달하는 일만 한다.
+
+**진행 순서**
+
+| # | 한 일 | 내용 |
+|---|---|---|
+| 1 | `app.py` 문법 오류 수정 | `{}` → `[]`, `randit` → `randint`, `2*32` → `2**32` |
+| 2 | 웹 디자인 변경 | 어두운 테마, 로딩 표시, 에러 박스 추가 |
+| 3 | 분리 구조로 변경 | `COMFY_URL` 을 환경변수로 받고, 이미지는 `/view` 를 통해 VM이 대신 받아서 전달 |
+| 4 | Docker 컨테이너화 | `Dockerfile` 작성, `deploy_vm.sh` 로 파일을 VM에 옮김 |
+| 5 | 5000번 컨테이너 | 코드가 이미지 안에 들어 있는 방식 |
+| 6 | 5001번 컨테이너 | `-v ~/comfyui:/app` 으로 코드를 VM 폴더와 연결 (서버와 코드 분리) |
+| 7 | Flux2 템플릿 적용 | 워크플로를 Flux2 템플릿으로 바꾸고 노드 번호를 `76`, `75:67`, `75:73` 으로 맞춤 |
+| 8 | 요청 주소 변경 | `COMFY_URL` 을 교수님 PC로 바꾸고, 컨테이너를 새 `-e` 값으로 다시 실행 |
+| 9 | 대기 시간 600초로 늘림 | 여러 명이 같은 PC를 써서 대기열이 길기 때문 |
+
+**요청 주소만 바꿔서 다시 실행**
+
+```bash
+sudo docker rm -f comfy-web-5001
+sudo docker run -d --name comfy-web-5001 --restart unless-stopped \
+  -p 5001:5000 \
+  -v ~/comfyui:/app \
+  -e COMFY_URL=http://<교수님 PC IP>:8188 \
+  comfy-web
+```
+
+**배운 점**
+
+- 주소를 코드에 고정하지 않고 환경변수(`COMFY_URL`)로 빼 두니, 코드를 고치지 않고 `-e` 값만 바꿔서 다른 서버에 붙일 수 있었다.
+- 모델이 바뀌면 워크플로 JSON의 노드 번호도 바뀐다. 프롬프트와 시드를 넣는 노드 ID를 새 워크플로에 맞춰야 한다.
+- 이미지를 Flask의 `/view` 가 대신 받아 주기 때문에, 브라우저는 내 VM에만 접속하면 된다.
+- 공용 GPU는 대기열이 생기므로 폴링 대기 시간을 넉넉하게 잡아야 한다.
+
+> 이 저장소의 `app.py`, `static/test.json` 은 SDXL Turbo 버전(노드 `6`, `7`, `13`, 대기 180초)이다.
+> Flux2로 돌릴 때는 워크플로 JSON과 노드 번호, 대기 시간을 위 내용대로 바꿔서 사용했다.
 
 ---
 
