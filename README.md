@@ -383,6 +383,20 @@ sudo docker run -d --name comfy-web-5001 --restart unless-stopped \
 - 포지티브 프롬프트는 CLIP 노드에 직접 넣지 않고, 따로 있는 Prompt 노드(`76`)에 넣는다. 키 이름도 `text` 가 아니라 `value` 다.
 - 스텝 20, 1024 x 1024 라서 SDXL Turbo(1스텝, 512)보다 한 장 생성에 훨씬 오래 걸린다. 대기 시간을 늘린 이유 중 하나다.
 
+**결과 비교 (같은 프롬프트)**
+
+프롬프트: `A person in a spacesuit is repairing a space station in space, with Earth visible in the distance`
+
+| | SDXL Turbo (내 GPU 서버) | Flux2 Klein (교수님 PC) |
+|---|:---:|:---:|
+| 결과 | <img src="images/10_astronaut.png" width="256"> | <img src="images/11_flux2_astronaut.png" width="256"> |
+| 설정 | 1스텝, 512 x 512 | 20스텝, 1024 x 1024 |
+| 생성 시간 | 1.5초 | 34.4초 (대기 포함) |
+
+- Flux2 쪽은 프롬프트의 요소(우주복, 수리 동작, 우주정거장, 멀리 보이는 지구)가 한 장면 안에 정리돼서 들어갔다.
+- SDXL Turbo는 훨씬 빠르지만, 정거장 구조물이 뒤엉켜 있고 지구가 배경에 묻혀 잘 드러나지 않는다.
+- 속도는 SDXL Turbo, 프롬프트 반영과 디테일은 Flux2가 낫다. 각 1장씩만 비교한 결과다.
+
 **Flux2용 코드 ([`app_flux2.py`](app_flux2.py))**
 
 `app.py` 와 달라진 점은 세 가지다.
