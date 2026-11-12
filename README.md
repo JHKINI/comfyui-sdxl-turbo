@@ -18,6 +18,9 @@ ComfyUI API를 Flask 웹 페이지(Prompt Studio)에 연결하고, 그 웹을 VM
 | UI | [ComfyUI](https://github.com/comfyanonymous/ComfyUI) |
 | 모델 | [stabilityai/sdxl-turbo](https://huggingface.co/stabilityai/sdxl-turbo) - `sd_xl_turbo_1.0_fp16.safetensors` (약 7GB) |
 | 웹 서버 | Flask + requests (VMware VM의 Docker 컨테이너에서 실행) |
+| 코드 편집 | VS Code (`/workspace/comfyui` 에서 파일 편집) |
+| 개발 컨테이너 | Dev Container (Python 3.12 Slim 기반) |
+| 서버 접속 | PuTTY 로 원격 Ubuntu 서버에 SSH 접속 |
 
 ```
 [브라우저] ──► [VMware VM: Docker 컨테이너 (Flask)] ──► [GPU 서버: ComfyUI :8188]
