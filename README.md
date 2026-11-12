@@ -34,7 +34,8 @@ ComfyUI API를 Flask 웹 페이지(Prompt Studio)에 연결하고, 그 웹을 VM
 ├── templates/
 │   └── image.html        # 웹 화면 (Prompt Studio)
 ├── static/
-│   └── test.json         # ComfyUI에서 "내보내기(API)"로 받은 워크플로
+│   ├── test.json         # SDXL Turbo 워크플로 (ComfyUI "내보내기(API)")
+│   └── flux2.json        # Flux2 워크플로 (10번 실습)
 ├── docs/
 │   └── deploy_vm_guide.md  # VM 배포 상세 가이드
 └── images/               # 결과 이미지, 캡처
@@ -359,8 +360,30 @@ sudo docker run -d --name comfy-web-5001 --restart unless-stopped \
 - 이미지를 Flask의 `/view` 가 대신 받아 주기 때문에, 브라우저는 내 VM에만 접속하면 된다.
 - 공용 GPU는 대기열이 생기므로 폴링 대기 시간을 넉넉하게 잡아야 한다.
 
-> 이 저장소의 `app.py`, `static/test.json` 은 SDXL Turbo 버전(노드 `6`, `7`, `13`, 대기 180초)이다.
-> Flux2로 돌릴 때는 워크플로 JSON과 노드 번호, 대기 시간을 위 내용대로 바꿔서 사용했다.
+**Flux2 워크플로 ([`static/flux2.json`](static/flux2.json))**
+
+| 항목 | SDXL Turbo (`test.json`) | Flux2 (`flux2.json`) |
+|---|---|---|
+| 모델 | sd_xl_turbo_1.0_fp16 (체크포인트 1개) | flux-2-klein-base-4b + 텍스트 인코더 qwen_3_4b + flux2-vae (3개를 따로 로드) |
+| 스텝 수 | 1 | 20 |
+| CFG | 1.0 | 5 |
+| 샘플러 | euler_ancestral | euler |
+| 크기 | 512 x 512 | 1024 x 1024 |
+
+**`app.py` 에서 값을 넣는 노드**
+
+| 넣는 값 | SDXL Turbo | Flux2 | Flux2 노드 종류 |
+|---|---|---|---|
+| 포지티브 프롬프트 | `6` → `inputs.text` | `76` → `inputs.value` | PrimitiveStringMultiline (Prompt) |
+| 네거티브 프롬프트 | `7` → `inputs.text` | `75:67` → `inputs.text` | CLIPTextEncode (Negative Prompt) |
+| 시드 | `13` → `inputs.noise_seed` | `75:73` → `inputs.noise_seed` | RandomNoise |
+
+- Flux2 템플릿은 노드가 서브그래프로 묶여 있어서 ID가 `75:67` 처럼 `그룹:노드` 형태로 나온다.
+- 포지티브 프롬프트는 CLIP 노드에 직접 넣지 않고, 따로 있는 Prompt 노드(`76`)에 넣는다. 키 이름도 `text` 가 아니라 `value` 다.
+- 스텝 20, 1024 x 1024 라서 SDXL Turbo(1스텝, 512)보다 한 장 생성에 훨씬 오래 걸린다. 대기 시간을 늘린 이유 중 하나다.
+
+> 이 저장소의 `app.py` 는 SDXL Turbo 버전(노드 `6`, `7`, `13`, 대기 180초)이다.
+> Flux2로 돌릴 때는 워크플로를 `flux2.json` 으로 바꾸고, 노드 번호와 대기 시간을 위 표대로 수정해서 사용했다.
 
 ---
 
