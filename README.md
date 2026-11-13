@@ -21,6 +21,7 @@ ComfyUI API를 Flask 웹 페이지(Prompt Studio)에 연결하고, 그 웹을 VM
 | 코드 편집 | VS Code (`/workspace/comfyui` 에서 파일 편집) |
 | 개발 컨테이너 | Dev Container (Python 3.12 Slim 기반) |
 | 서버 접속 | PuTTY 로 원격 Ubuntu 서버에 SSH 접속 |
+| 파일 전송 | scp, FileZilla (SFTP) |
 
 ```
 [브라우저] ──► [VMware VM: Docker 컨테이너 (Flask)] ──► [GPU 서버: ComfyUI :8188]
@@ -280,10 +281,12 @@ Flask 웹을 VM의 Docker 컨테이너로 띄우고, 이미지 생성은 GPU 서
 
 **파일을 VM으로 옮기기**
 
-파일 옮기기도 두 가지로 해 보았다.
+파일 옮기기는 세 가지로 해 보았다.
 
 - `deploy_vm.sh` 붙여넣기: 파일들이 스크립트 안에 들어 있어서, VM에 붙여넣고 실행하면 풀기 → 빌드 → 실행까지 한 번에 된다. 코드를 고치면 스크립트도 다시 만들어야 한다.
 - `scp`: 내 PC의 PowerShell에서 폴더나 파일 하나를 바로 보낸다. `-v` 방식(5001번)과 같이 쓰면 파일을 보낸 뒤 `docker restart` 한 줄로 반영된다.
+
+- FileZilla (SFTP): PuTTY와 같은 계정으로 접속해서, 왼쪽(내 PC)에서 오른쪽(VM)으로 폴더를 드래그한다. VM에 어떤 파일이 있는지 눈으로 확인하면서 옮길 수 있다.
 
 ```powershell
 scp -r D:\경로\comfyui <사용자>@<VM IP>:~/            # 폴더 전체
